@@ -6,7 +6,13 @@ import asyncio
 from collections.abc import Mapping
 from typing import Any
 
-from aiohttp import ClientError, ClientResponse, ClientSession, ClientWebSocketResponse
+from aiohttp import (
+    ClientError,
+    ClientResponse,
+    ClientSession,
+    ClientWebSocketResponse,
+    WSServerHandshakeError,
+)
 
 from .const import DEFAULT_API_VERSION, DEFAULT_TIMEOUT
 
@@ -148,6 +154,14 @@ class AndroidTVBridgeClient:
                 headers=self._headers(),
                 heartbeat=30,
             )
+        except WSServerHandshakeError as err:
+            if err.status in (401, 403):
+                raise AndroidTVBridgeAuthError(
+                    "Authentication was rejected by the launcher"
+                ) from err
+            raise AndroidTVBridgeConnectionError(
+                f"Could not open WebSocket to {self.websocket_url}: HTTP {err.status}"
+            ) from err
         except ClientError as err:
             raise AndroidTVBridgeConnectionError(
                 f"Could not open WebSocket to {self.websocket_url}"

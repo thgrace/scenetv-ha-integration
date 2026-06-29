@@ -10,6 +10,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.core import callback
+from homeassistant.helpers import instance_id
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .client import AndroidTVBridgeClient, AndroidTVBridgeError
@@ -23,6 +24,22 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+_STABLE_ID_KEYS = (
+    "device_id",
+    "deviceId",
+    "android_id",
+    "androidId",
+    "installation_id",
+    "installationId",
+    "uuid",
+    "serial_number",
+    "serialNumber",
+    "serial",
+    "mac_address",
+    "macAddress",
+)
+_STABLE_DISCOVERY_KEYS = (*_STABLE_ID_KEYS, "hostname", "server")
+
 
 def _property(properties: dict[str, Any], key: str) -> str | None:
     value = properties.get(key)
@@ -31,6 +48,30 @@ def _property(properties: dict[str, Any], key: str) -> str | None:
     if value is None:
         return None
     return str(value)
+
+
+def _metadata_value(metadata: dict[str, Any], key: str) -> str | None:
+    value = metadata.get(key)
+    if value is None:
+        return None
+    return str(value)
+
+
+def _stable_unique_id(
+    metadata: dict[str, Any],
+    discovery_properties: dict[str, Any] | None = None,
+) -> str | None:
+    """Return the most stable launcher identifier available."""
+    for key in _STABLE_ID_KEYS:
+        if value := _metadata_value(metadata, key):
+            return value
+
+    if discovery_properties:
+        for key in _STABLE_DISCOVERY_KEYS:
+            if value := _property(discovery_properties, key):
+                return value
+
+    return None
 
 
 class AndroidTVBridgeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -45,6 +86,7 @@ class AndroidTVBridgeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._name: str = "SceneTV"
         self._api_version: str = DEFAULT_API_VERSION
         self._metadata: dict[str, Any] = {}
+        self._discovery_properties: dict[str, Any] = {}
         self._pairing_request_id: str | None = None
 
     async def async_step_user(
@@ -82,6 +124,8 @@ class AndroidTVBridgeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._host = discovery_info.host
         self._port = discovery_info.port or DEFAULT_PORT
         properties = dict(discovery_info.properties or {})
+        if hostname := getattr(discovery_info, "hostname", None):
+            properties.setdefault("hostname", hostname)
         self._name = (
             _property(properties, "display_name")
             or _property(properties, "name")
@@ -89,10 +133,11 @@ class AndroidTVBridgeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             or "SceneTV"
         )
         self.context["title_placeholders"] = {"name": self._name}
+        self._discovery_properties = properties
 
-        device_id = _property(properties, "device_id")
-        if device_id:
-            await self.async_set_unique_id(device_id)
+        unique_id = _stable_unique_id({}, properties)
+        if unique_id:
+            await self.async_set_unique_id(unique_id)
             self._abort_if_unique_id_configured(
                 updates={CONF_HOST: self._host, CONF_PORT: self._port}
             )
@@ -142,9 +187,9 @@ class AndroidTVBridgeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             api_version=self._api_version,
         )
         self._metadata = await client.async_get_metadata()
-        device_id = self._metadata.get("device_id") or f"{self._host}:{self._port}"
-        if device_id:
-            await self.async_set_unique_id(str(device_id))
+        unique_id = _stable_unique_id(self._metadata, self._discovery_properties)
+        if unique_id:
+            await self.async_set_unique_id(unique_id)
             self._abort_if_unique_id_configured(
                 updates={CONF_HOST: self._host, CONF_PORT: self._port}
             )
@@ -160,8 +205,9 @@ class AndroidTVBridgeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._port,
             api_version=self._api_version,
         )
+        ha_instance_id = await instance_id.async_get(self.hass)
         response = await client.async_request_pairing(
-            ha_instance_id=self.hass.config.uuid,
+            ha_instance_id=ha_instance_id,
             ha_name=self.hass.config.location_name,
         )
         if response.get("status") == "approved" and response.get("token"):

@@ -84,6 +84,27 @@ def _clean_state(data: Mapping[str, Any] | None) -> dict[str, Any]:
     }
 
 
+def _seed_state_from_metadata(metadata: Mapping[str, Any]) -> dict[str, Any]:
+    """Build initial coordinator data without requiring the state endpoint."""
+    embedded_state = metadata.get("state")
+    seeded = _clean_state(embedded_state if isinstance(embedded_state, Mapping) else None)
+
+    metadata_fields = {
+        "launcher_mode": ("launcher_mode", "launcherMode"),
+        "launcher_modes": ("launcher_modes", "launcherModes"),
+    }
+    for target, keys in metadata_fields.items():
+        if target in seeded:
+            continue
+        for key in keys:
+            value = metadata.get(key)
+            if value is not None:
+                seeded[target] = value
+                break
+
+    return seeded
+
+
 class AndroidTVBridgeRuntime:
     """Owns one configured launcher connection."""
 
@@ -143,9 +164,22 @@ class AndroidTVBridgeRuntime:
 
     async def async_start(self) -> None:
         """Start the runtime."""
+        self._stopped.clear()
         self.metadata = await self.client.async_get_metadata()
-        await self.coordinator.async_config_entry_first_refresh()
-        self._ws_task = self.hass.async_create_task(self._async_listen())
+        self.coordinator.async_set_updated_data(
+            {
+                **_seed_state_from_metadata(self.metadata),
+                "connection": False,
+            }
+        )
+
+        first_connection: asyncio.Future[None] = self.hass.loop.create_future()
+        self._ws_task = self.hass.async_create_task(self._async_listen(first_connection))
+        try:
+            await first_connection
+        except AndroidTVBridgeError:
+            await self.async_stop()
+            raise
 
     async def async_stop(self) -> None:
         """Stop the runtime and reject pending commands."""
@@ -162,14 +196,26 @@ class AndroidTVBridgeRuntime:
     async def _async_update_data(self) -> dict[str, Any]:
         try:
             state = await self.client.async_get_state()
+        except AndroidTVBridgeAuthError as err:
+            raise UpdateFailed(str(err)) from err
         except AndroidTVBridgeError as err:
+            if self.coordinator.data is not None:
+                _LOGGER.debug("State refresh failed; keeping WebSocket state: %s", err)
+                return {
+                    **self.coordinator.data,
+                    "connection": self.connected,
+                }
             raise UpdateFailed(str(err)) from err
         return {
+            **(self.coordinator.data or {}),
             **_clean_state(state),
             "connection": self.connected,
         }
 
-    async def _async_listen(self) -> None:
+    async def _async_listen(
+        self,
+        first_connection: asyncio.Future[None] | None = None,
+    ) -> None:
         reconnect_delay = 1
         while not self._stopped.is_set():
             try:
@@ -177,20 +223,27 @@ class AndroidTVBridgeRuntime:
                 self.connected = True
                 reconnect_delay = 1
                 self._merge_state({"connection": True})
+                if first_connection is not None and not first_connection.done():
+                    first_connection.set_result(None)
                 async for message in websocket:
                     if message.type == WSMsgType.TEXT:
                         await self._handle_ws_payload(message.json())
                     elif message.type in (WSMsgType.CLOSED, WSMsgType.ERROR):
                         break
-            except AndroidTVBridgeAuthError:
+            except AndroidTVBridgeAuthError as err:
                 self.connected = False
                 self._merge_state({"connection": False})
                 _LOGGER.exception("Launcher rejected the stored pairing token")
+                if first_connection is not None and not first_connection.done():
+                    first_connection.set_exception(err)
                 return
             except (AndroidTVBridgeConnectionError, ValueError) as err:
                 self.connected = False
                 self._merge_state({"connection": False})
                 _LOGGER.debug("Launcher WebSocket disconnected: %s", err)
+                if first_connection is not None and not first_connection.done():
+                    first_connection.set_exception(err)
+                    return
             finally:
                 self._websocket = None
             await asyncio.sleep(reconnect_delay)
