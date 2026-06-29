@@ -12,7 +12,7 @@ This repository is structured as a HACS custom integration repository.
 4. Select **Integration** as the category.
 5. Install **SceneTV Android TV Bridge**.
 6. Restart Home Assistant.
-7. Go to **Settings -> Devices & services -> Add integration** and search for **Android TV Bridge**.
+7. Go to **Settings -> Devices & services -> Add integration** and search for **SceneTV Android TV Bridge**.
 
 ## Manual installation
 
@@ -22,7 +22,7 @@ Copy `custom_components/android_tv_bridge` into your Home Assistant config direc
 <home-assistant-config>/custom_components/android_tv_bridge
 ```
 
-Restart Home Assistant, then add **Android TV Bridge** from **Settings -> Devices & services**.
+Restart Home Assistant, then add **SceneTV Android TV Bridge** from **Settings -> Devices & services**.
 
 ## Features
 

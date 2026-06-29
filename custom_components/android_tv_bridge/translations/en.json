@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Add Android TV Bridge",
+        "title": "Add SceneTV Android TV Bridge",
         "description": "Enter the local SceneTV bridge address.",
         "data": {
           "host": "Host",
@@ -25,7 +25,7 @@
       "pairing_pending": "Pairing is still pending approval on the TV."
     },
     "abort": {
-      "already_configured": "This launcher is already configured.",
+      "already_configured": "This SceneTV launcher is already configured.",
       "cannot_connect": "Could not connect to the launcher.",
       "pairing_rejected": "Pairing was rejected on the TV.",
       "pairing_expired": "The pairing request expired.",
