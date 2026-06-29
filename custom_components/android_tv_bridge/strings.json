@@ -1,0 +1,66 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add Android TV Bridge",
+        "description": "Enter the local SceneTV bridge address.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "name": "Name"
+        }
+      },
+      "zeroconf_confirm": {
+        "title": "Add {name}",
+        "description": "Start pairing with this SceneTV launcher?"
+      },
+      "pair": {
+        "title": "Approve pairing",
+        "description": "Approve the pairing prompt on the TV, then submit this form.",
+        "data": {}
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the launcher.",
+      "pairing_pending": "Pairing is still pending approval on the TV."
+    },
+    "abort": {
+      "already_configured": "This launcher is already configured.",
+      "cannot_connect": "Could not connect to the launcher.",
+      "pairing_rejected": "Pairing was rejected on the TV.",
+      "pairing_expired": "The pairing request expired.",
+      "pairing_revoked": "Pairing was revoked."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "foreground_app": { "name": "Foreground app" },
+      "foreground_package": { "name": "Foreground package" },
+      "selected_item": { "name": "Selected item" },
+      "media_app": { "name": "Media app" },
+      "media_title": { "name": "Media title" },
+      "media_artist": { "name": "Media artist" },
+      "media_album": { "name": "Media album" },
+      "media_state": { "name": "Media state" },
+      "media_position": { "name": "Media position" },
+      "media_duration": { "name": "Media duration" },
+      "last_key": { "name": "Last key" },
+      "app_list_version": { "name": "App list version" }
+    },
+    "binary_sensor": {
+      "connection": { "name": "Connection" },
+      "playing": { "name": "Playing" },
+      "launcher_visible": { "name": "Launcher visible" },
+      "idle": { "name": "Idle" },
+      "accessibility": { "name": "Accessibility" }
+    },
+    "button": {
+      "refresh": { "name": "Refresh apps" },
+      "home": { "name": "Home" },
+      "dismiss_popup": { "name": "Dismiss popup" }
+    },
+    "select": {
+      "launcher_mode": { "name": "Launcher mode" }
+    }
+  }
+}

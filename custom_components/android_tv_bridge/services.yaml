@@ -1,0 +1,225 @@
+launch_app:
+  fields:
+    entry_id:
+      selector:
+        text:
+    device_id:
+      selector:
+        device:
+          integration: android_tv_bridge
+    package:
+      required: true
+      selector:
+        text:
+    timeout_ms:
+      selector:
+        number:
+          min: 1000
+          max: 60000
+          mode: box
+
+launch_intent:
+  fields:
+    entry_id:
+      selector:
+        text:
+    device_id:
+      selector:
+        device:
+          integration: android_tv_bridge
+    intent_uri:
+      required: true
+      selector:
+        text:
+          multiline: true
+    timeout_ms:
+      selector:
+        number:
+          min: 1000
+          max: 60000
+          mode: box
+
+open_uri:
+  fields:
+    entry_id:
+      selector:
+        text:
+    device_id:
+      selector:
+        device:
+          integration: android_tv_bridge
+    uri:
+      required: true
+      selector:
+        text:
+    timeout_ms:
+      selector:
+        number:
+          min: 1000
+          max: 60000
+          mode: box
+
+send_key:
+  fields:
+    entry_id:
+      selector:
+        text:
+    device_id:
+      selector:
+        device:
+          integration: android_tv_bridge
+    key:
+      required: true
+      selector:
+        text:
+    timeout_ms:
+      selector:
+        number:
+          min: 1000
+          max: 60000
+          mode: box
+
+media_command:
+  fields:
+    entry_id:
+      selector:
+        text:
+    device_id:
+      selector:
+        device:
+          integration: android_tv_bridge
+    command:
+      required: true
+      selector:
+        select:
+          options:
+            - play
+            - pause
+            - play_pause
+            - stop
+            - next
+            - previous
+            - seek
+    seek_position_ms:
+      selector:
+        number:
+          min: 0
+          max: 86400000
+          mode: box
+    timeout_ms:
+      selector:
+        number:
+          min: 1000
+          max: 60000
+          mode: box
+
+show_popup:
+  fields:
+    entry_id:
+      selector:
+        text:
+    device_id:
+      selector:
+        device:
+          integration: android_tv_bridge
+    title:
+      selector:
+        text:
+    text:
+      required: true
+      selector:
+        text:
+          multiline: true
+    duration_ms:
+      selector:
+        number:
+          min: 1000
+          max: 600000
+          mode: box
+    timeout_ms:
+      selector:
+        number:
+          min: 1000
+          max: 60000
+          mode: box
+
+show_image:
+  fields:
+    entry_id:
+      selector:
+        text:
+    device_id:
+      selector:
+        device:
+          integration: android_tv_bridge
+    title:
+      selector:
+        text:
+    image_url:
+      required: true
+      selector:
+        text:
+    duration_ms:
+      selector:
+        number:
+          min: 1000
+          max: 600000
+          mode: box
+    timeout_ms:
+      selector:
+        number:
+          min: 1000
+          max: 60000
+          mode: box
+
+dismiss_popup:
+  fields:
+    entry_id:
+      selector:
+        text:
+    device_id:
+      selector:
+        device:
+          integration: android_tv_bridge
+    timeout_ms:
+      selector:
+        number:
+          min: 1000
+          max: 60000
+          mode: box
+
+refresh_apps:
+  fields:
+    entry_id:
+      selector:
+        text:
+    device_id:
+      selector:
+        device:
+          integration: android_tv_bridge
+    timeout_ms:
+      selector:
+        number:
+          min: 1000
+          max: 60000
+          mode: box
+
+set_launcher_mode:
+  fields:
+    entry_id:
+      selector:
+        text:
+    device_id:
+      selector:
+        device:
+          integration: android_tv_bridge
+    mode:
+      required: true
+      selector:
+        text:
+    timeout_ms:
+      selector:
+        number:
+          min: 1000
+          max: 60000
+          mode: box
